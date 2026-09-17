@@ -36,7 +36,8 @@
     const dot = hover.querySelector('.hover-dot');
     const pw = c.W - c.L - c.R, ph = c.H - c.T - c.B;
     const sx = (x) => c.L + ((x - c.xlo) / (c.xhi - c.xlo || 1)) * pw;
-    const sy = (y) => { const f = (y - c.ylo) / (c.yhi - c.ylo || 1); return c.invertY ? c.T + f * ph : c.T + ph - f * ph; };
+    const sy = (y) => c.T + ph - ((y - c.ylo) / (c.yhi - c.ylo || 1)) * ph;
+    const fmtY = (y) => (c.yLabels ? (c.yLabels[y] || y) : fmt(y));
     const show = (evt) => {
       const r = svg.getBoundingClientRect();
       const vx = ((evt.clientX - r.left) / r.width) * c.W;
@@ -47,7 +48,7 @@
       line.setAttribute('x1', px); line.setAttribute('x2', px);
       dot.setAttribute('cx', px); dot.setAttribute('cy', py);
       hover.removeAttribute('hidden');
-      tip.innerHTML = '<b>' + fmt(best.y) + '</b> ' + c.yLabel.toLowerCase() + ' at <b>' + fmt(best.x) + ' h</b>' +
+      tip.innerHTML = '<b>' + fmtY(best.y) + '</b> ' + (c.yLabels ? '' : c.yLabel.toLowerCase() + ' ') + 'at <b>' + fmt(best.x) + ' h</b>' +
         '<span class="muted">' + fmtDate(best.date) + (best.note ? ' · ' + best.note : '') + '</span>';
       tip.style.left = (px / c.W) * r.width + 'px';
       tip.style.top = (py / c.H) * r.height + 'px';

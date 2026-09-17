@@ -21,14 +21,24 @@ const BASE_PATH = (process.env.BASE_PATH ?? site.basePath ?? '').replace(/\/$/, 
 const SITE_URL = (process.env.SITE_URL ?? site.url ?? 'http://localhost:4321').replace(/\/$/, '');
 const url = (p) => `${BASE_PATH}${p}`;          // site-relative link
 const abs = (p) => `${SITE_URL}${p}`;            // absolute link (feed, canonical)
-const porcLowerIsBetter = site.porc?.lowerIsBetter !== false;
 const porcLabel = site.porc?.label ?? 'PORC rank';
+// Tiers listed top (best) to bottom in site.json; internally the bottom tier is 0 so "up" on the chart means better.
+const TIERS_TOP_DOWN = (site.porc?.tiers ?? ['meteorite', 'mithril', 'adamantium', 'platinum', 'gold', 'silver', 'iron', 'stone']).map((t) => String(t).toLowerCase());
+const TIERS = [...TIERS_TOP_DOWN].reverse();
+const tierIndex = (name) => (name == null ? null : TIERS.indexOf(String(name).trim().toLowerCase()));
+const tierName = (i) => (i == null || i < 0 || i >= TIERS.length ? null : TIERS[i][0].toUpperCase() + TIERS[i].slice(1));
 
 // ---------------------------------------------------------------- helpers
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const fmtNum = (n) => (n == null || n === '' ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }));
 const fmtHours = (h) => (h == null ? '—' : `${fmtNum(h)} h`);
-const fmtPorc = (p) => (p == null ? '—' : porcLowerIsBetter ? `#${fmtNum(p)}` : fmtNum(p));
+const fmtPorc = (p) => {
+  if (p == null || p === '') return '—';
+  const i = tierIndex(p);
+  if (i >= 0) return tierName(i);
+  console.warn(`unknown PORC tier "${p}" (expected one of: ${TIERS_TOP_DOWN.join(', ')})`);
+  return esc(p);
+};
 const fmtDate = (d) => {
   const dt = new Date(`${d}T12:00:00Z`);
   return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -163,27 +173,34 @@ const tips = loadTips();
 const allSayings = tips.chapters.flatMap((c) => c.sayings.map((s) => ({ ref: s.ref, text: s.text, href: url(`/tips/#${s.id}`) })));
 
 // ---------------------------------------------------------------- charts (build-time SVG, hover added by main.js)
-function lineChart({ id, points, yLabel, xLabel = 'Hours played', invertY = false, yFromZero = true, markers = [], fmtY = fmtNum }) {
-  const W = 720, H = 340, L = 60, R = 20, T = 20, B = 48;
+function lineChart({ id, points, yLabel, xLabel = 'Hours played', markers = [], fmtY = fmtNum, yTicks = null, yLabels = null, step = false, area: wantArea = true }) {
+  const W = 720, H = 340, L = yLabels ? 96 : 60, R = 20, T = 20, B = 48;
   const pw = W - L - R, ph = H - T - B;
-  if (points.length === 0) return `<p class="muted">No data yet. Add checkpoints to <code>content/stats.json</code>.</p>`;
+  if (points.length === 0) return `<p class="muted">No checkpoints yet.</p>`;
   const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
   const xt = niceTicks(0, Math.max(...xs) * 1.02 || 1, 6);
-  const yMin = yFromZero ? 0 : Math.min(...ys), yMax = Math.max(...ys);
-  const pad = yFromZero ? 0 : (yMax - yMin || 1) * 0.1;
-  const yt = niceTicks(yMin - pad, yMax + pad, 5);
+  // Categorical y (tiers): fixed ticks with a half-step of padding. Numeric y: nice ticks from zero.
+  const yt = yTicks
+    ? { lo: Math.min(...yTicks) - 0.5, hi: Math.max(...yTicks) + 0.5, ticks: yTicks }
+    : niceTicks(0, Math.max(...ys), 5);
   const sx = (x) => L + ((x - xt.lo) / (xt.hi - xt.lo || 1)) * pw;
-  const sy = (y) => { const f = (y - yt.lo) / (yt.hi - yt.lo || 1); return invertY ? T + f * ph : T + ph - f * ph; };
-  const line = points.map((p, i) => `${i ? 'L' : 'M'}${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`).join(' ');
-  const base = invertY ? T : T + ph;
+  const sy = (y) => T + ph - ((y - yt.lo) / (yt.hi - yt.lo || 1)) * ph;
+  const line = points.map((p, i) => {
+    if (!i) return `M${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`;
+    return step
+      ? `H${sx(p.x).toFixed(1)} V${sy(p.y).toFixed(1)}`
+      : `L${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`;
+  }).join(' ');
+  const base = T + ph;
   const area = `${line} L${sx(points.at(-1).x).toFixed(1)} ${base} L${sx(points[0].x).toFixed(1)} ${base} Z`;
   const grid = yt.ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}" class="grid"/>`).join('');
-  const yAxis = yt.ticks.map((v) => `<text x="${L - 8}" y="${sy(v).toFixed(1)}" dy="0.35em" text-anchor="end" class="tick">${fmtY(v)}</text>`).join('');
+  const tickLabel = (v) => (yLabels ? esc(yLabels[v] ?? v) : fmtY(v));
+  const yAxis = yt.ticks.map((v) => `<text x="${L - 8}" y="${sy(v).toFixed(1)}" dy="0.35em" text-anchor="end" class="tick">${tickLabel(v)}</text>`).join('');
   const xAxis = xt.ticks.map((v) => `<text x="${sx(v).toFixed(1)}" y="${T + ph + 18}" text-anchor="middle" class="tick">${fmtNum(v)}</text>`).join('');
   const dots = points.map((p) => `<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.5" class="dot"/>`).join('');
   const marks = markers.map((m) => `<a href="${m.href}" class="marker"><title>${esc(m.title)}</title><circle cx="${sx(m.x).toFixed(1)}" cy="${sy(m.y).toFixed(1)}" r="7"/></a>`).join('');
   const data = esc(JSON.stringify({
-    L, R, T, B, W, H, invertY, xlo: xt.lo, xhi: xt.hi, ylo: yt.lo, yhi: yt.hi, yLabel, xLabel,
+    L, R, T, B, W, H, xlo: xt.lo, xhi: xt.hi, ylo: yt.lo, yhi: yt.hi, yLabel, xLabel, yLabels,
     points: points.map((p) => ({ x: p.x, y: p.y, date: p.date, note: p.note ?? '' })),
   }));
   return `<figure class="chart" id="${id}">
@@ -194,7 +211,7 @@ function lineChart({ id, points, yLabel, xLabel = 'Hours played', invertY = fals
     ${yAxis}${xAxis}
     <text x="${L + pw / 2}" y="${H - 6}" text-anchor="middle" class="axis-label">${esc(xLabel)}</text>
     <text transform="translate(14 ${T + ph / 2}) rotate(-90)" text-anchor="middle" class="axis-label">${esc(yLabel)}</text>
-    ${invertY ? '' : `<path d="${area}" class="area"/>`}
+    ${wantArea ? `<path d="${area}" class="area"/>` : ''}
     <path d="${line}" class="line"/>
     ${dots}${marks}
     <g class="hover" hidden><line class="crosshair" y1="${T}" y2="${T + ph}"/><circle r="6" class="hover-dot"/></g>
@@ -305,11 +322,11 @@ ${saying}
   ${recent || '<p class="muted">No posts yet.</p>'}
   <p><a href="${url('/blog/')}">All posts &rarr;</a></p>
 </section>
-<section>
+${stats.length ? `<section>
   <h2>The climb so far</h2>
   ${chart}
   <p><a href="${url('/tracker/')}">Full tracker &rarr;</a></p>
-</section>`,
+</section>` : ''}`,
   });
 }
 
@@ -350,23 +367,26 @@ function trackerPage() {
     points: stats.map((s) => ({ x: s.hours, y: s.bp, date: s.date, note: s.note })),
     markers: posts.filter((p) => p.journey.hours != null && p.journey.bp != null).map((p) => ({ x: p.journey.hours, y: p.journey.bp, href: url(p.path), title: `${p.title} (${fmtDate(p.date)})` })),
   });
-  const porcPoints = stats.filter((s) => s.porc != null).map((s) => ({ x: s.hours, y: s.porc, date: s.date, note: s.note }));
+  const porcPoints = stats.filter((s) => tierIndex(s.porc) >= 0).map((s) => ({ x: s.hours, y: tierIndex(s.porc), date: s.date, note: s.note }));
   const porcChart = porcPoints.length ? lineChart({
-    id: 'porc-chart', yLabel: porcLabel, invertY: porcLowerIsBetter, yFromZero: false, fmtY: fmtPorc,
+    id: 'porc-chart', yLabel: porcLabel, step: true, area: false,
+    yTicks: TIERS.map((_, i) => i), yLabels: TIERS.map((_, i) => tierName(i)),
     points: porcPoints,
-    markers: posts.filter((p) => p.journey.hours != null && p.journey.porc != null).map((p) => ({ x: p.journey.hours, y: p.journey.porc, href: url(p.path), title: `${p.title} (${fmtDate(p.date)})` })),
+    markers: posts.filter((p) => p.journey.hours != null && tierIndex(p.journey.porc) >= 0).map((p) => ({ x: p.journey.hours, y: tierIndex(p.journey.porc), href: url(p.path), title: `${p.title} (${fmtDate(p.date)})` })),
   }) : '';
+  const ladder = `<p class="muted small">The ${esc(porcLabel)} ladder, top to bottom: ${TIERS_TOP_DOWN.map((t) => tierName(TIERS.indexOf(t))).join(', ')}.</p>`;
+  const empty = `<p class="muted">Nothing logged yet. The first checkpoint will appear here.</p>`;
   return layout({
     title: 'Tracker', page: 'tracker', canonical: '/tracker/',
     body: `<h1>Tracker</h1>
 <p class="muted">Battle points and ${esc(porcLabel)} plotted against hours played. Rings mark blog posts; click one to read what I was thinking at that point.</p>
-${tiles()}
+${stats.length ? `${tiles()}
 <h2>Battle points</h2>
 ${bpChart}
 ${porcChart ? `<h2>${esc(porcLabel)}</h2>
-<p class="muted small">${porcLowerIsBetter ? 'Lower is better, so the axis is flipped: climbing on the chart means climbing the ladder.' : 'Higher is better.'}</p>
+${ladder}
 ${porcChart}` : ''}
-${statsTable()}`,
+${statsTable()}` : empty + ladder}`,
   });
 }
 

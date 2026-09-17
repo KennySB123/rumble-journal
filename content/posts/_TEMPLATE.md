@@ -7,7 +7,7 @@ tags: footwork, structures
 # checkpoint in stats.json on or before the post date.
 # hours: 42
 # bp: 760
-# porc: 141
+# porc: gold
 # draft: true
 ---
 

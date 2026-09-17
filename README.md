@@ -9,7 +9,7 @@ You only ever touch the `content/` folder.
 | Want to... | Edit |
 |---|---|
 | Write a post | Copy `content/posts/_TEMPLATE.md` to `content/posts/YYYY-MM-DD-some-slug.md` |
-| Log progress | Add a row to `content/stats.json` |
+| Log progress | `npm run log -- <hours> <bp> [tier]`, or add a row to `content/stats.json` |
 | Add a saying | Edit `content/tips.md` |
 | Change the About page | Edit `content/about.md` |
 | Change name, tagline, intro, YouTube/Twitch links | Edit `content/site.json` |
@@ -34,11 +34,25 @@ Every post is **stamped** with hours played, BP, and PORC rank. The stamp is tak
 
 ### Checkpoints (`stats.json`)
 
-```json
-{ "date": "2026-09-17", "hours": 90, "bp": 1610, "porc": 88, "note": "optional" }
+Log one whenever you feel like it: after a session, once a week, at milestones. The quickest way is from a terminal in this folder:
+
+```bash
+npm run log -- 12.5 340
 ```
 
-Log one whenever you feel like it: after a session, once a week, at milestones. `porc` can be `null` before you have a placement. BP is plotted from zero; PORC is plotted on a flipped axis when `porc.lowerIsBetter` is `true` in `site.json` (rank #1 at the top). Set it to `false` if PORC is a score that goes up.
+That appends today's date with 12.5 hours and 340 BP. Add a PORC tier and a note if you like, and `--date` to backfill:
+
+```bash
+npm run log -- --date 2026-09-01 40 900 gold "first gold placement"
+```
+
+Or edit the file by hand. Each row looks like this, and `porc` can be `null` until you have a placement:
+
+```json
+{ "date": "2026-09-17", "hours": 90, "bp": 1610, "porc": "gold", "note": "optional" }
+```
+
+PORC tiers, top to bottom: meteorite, mithril, adamantium, platinum, gold, silver, iron, stone. They are listed in `site.json` if the ladder ever changes. BP is drawn as a line from zero; PORC is drawn as steps up the ladder.
 
 ### Sayings (`tips.md`)
 
