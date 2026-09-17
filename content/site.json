@@ -1,0 +1,16 @@
+{
+  "name": "Vulcanic",
+  "tagline": "A RUMBLE journal — one earthbender's climb, logged hour by hour",
+  "description": "Vulcanic's RUMBLE VR journal: blog posts stamped with hours played and battle points, a progress tracker, and a collection of sayings on the art of the arena.",
+  "intro": "I'm **Vulcanic**. This is where I write about RUMBLE, the VR earthbending fighter, as I climb. Every post is stamped with where I was at the time: hours in, battle points, and my PORC rank. Read the [tracker](tracker/) to see the whole arc, or the [tips](tips/) if you want the short version.",
+  "url": "https://USERNAME.github.io/rumble-journal",
+  "basePath": "",
+  "links": {
+    "youtube": "https://www.youtube.com/@YOUR_CHANNEL",
+    "twitch": "https://www.twitch.tv/YOUR_CHANNEL"
+  },
+  "porc": {
+    "label": "PORC rank",
+    "lowerIsBetter": true
+  }
+}

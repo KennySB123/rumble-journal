@@ -1,0 +1,9 @@
+[
+  { "date": "2026-06-01", "hours": 0,   "bp": 0,    "porc": null, "note": "Day one" },
+  { "date": "2026-06-14", "hours": 10,  "bp": 120,  "porc": null, "note": "First ranked matches" },
+  { "date": "2026-07-05", "hours": 25,  "bp": 410,  "porc": 180,  "note": "First PORC placement" },
+  { "date": "2026-07-26", "hours": 42,  "bp": 760,  "porc": 141 },
+  { "date": "2026-08-16", "hours": 60,  "bp": 1080, "porc": 112, "note": "Learned to hold ground" },
+  { "date": "2026-09-06", "hours": 78,  "bp": 1390, "porc": 96 },
+  { "date": "2026-09-17", "hours": 90,  "bp": 1610, "porc": 88,  "note": "Site launched" }
+]

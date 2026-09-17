@@ -1,0 +1,14 @@
+{
+  "name": "vulcanic-rumble-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vulcanic's RUMBLE journey: blog, BP tracker, and tips",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --serve"
+  },
+  "dependencies": {
+    "marked": "^15.0.0"
+  }
+}
