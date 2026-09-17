@@ -2,36 +2,29 @@
 title: The Art of Rumble
 ---
 
-Sayings gathered on the way up. Short, blunt, and meant to be argued with. Every one of them was learned by losing.
+Basic, but often hard learned lessons about the art of rumbling.
 
-## On preparation
+## On the body
 
-Before a fight is won in the arena it is decided in the mind. Fill in an intro paragraph here, or delete it.
+1. The torso and legs should always move as one. Like a rock, if the top should separate from the bottom, the whole will shatter.
 
-1. Placeholder saying one. Replace me with something true.
-2. Placeholder saying two.
+## On the arena
 
-   An optional line of commentary goes indented under the saying, like this. It can run a sentence or two.
+1. Whoever controls the centre controls the match.
+2. Cluttered surroundings cause accidents.
 
-3. Placeholder saying three.
+## On the rock
 
-## On the stance
+1. Choose one intentional rock over two random ones.
+2. A broken rock can hide another rock.
+3. Volatile is a two-faced friend.
 
-1. Placeholder saying about footwork.
-2. Placeholder saying about breathing.
+## On offence and defence
 
-## On structures
+1. As you push a rock forward, you are pushed backwards. This creates the yin and yang where offence will eventually need defence.
+2. The transition between offence, defence, and mobility is the point of greatest vulnerability.
 
-1. Placeholder saying about the wall.
-2. Placeholder saying about the disc.
-3. Placeholder saying about the pillar.
+## On victory and defeat
 
-## On the opponent
-
-1. Placeholder saying about reading intent.
-2. Placeholder saying about patience.
-
-## On defeat
-
-1. Placeholder saying about losing well.
-2. Placeholder saying about what to write down afterwards.
+1. There are more win conditions than victory.
+2. The only defeat is a loss without learning.
