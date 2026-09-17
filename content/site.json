@@ -11,6 +11,17 @@
   },
   "porc": {
     "label": "PORC rank",
-    "tiers": ["meteorite", "mithril", "adamantium", "platinum", "gold", "silver", "iron", "stone"]
+    "tiers": [
+      "meteorite",
+      "diamond",
+      "mithril",
+      "adamantium",
+      "platinum",
+      "gold",
+      "silver",
+      "bronze",
+      "iron",
+      "stone"
+    ]
   }
 }

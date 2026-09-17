@@ -23,10 +23,23 @@ const url = (p) => `${BASE_PATH}${p}`;          // site-relative link
 const abs = (p) => `${SITE_URL}${p}`;            // absolute link (feed, canonical)
 const porcLabel = site.porc?.label ?? 'PORC rank';
 // Tiers listed top (best) to bottom in site.json; internally the bottom tier is 0 so "up" on the chart means better.
-const TIERS_TOP_DOWN = (site.porc?.tiers ?? ['meteorite', 'mithril', 'adamantium', 'platinum', 'gold', 'silver', 'iron', 'stone']).map((t) => String(t).toLowerCase());
+const TIERS_TOP_DOWN = (site.porc?.tiers ?? ['meteorite', 'diamond', 'mithril', 'adamantium', 'platinum', 'gold', 'silver', 'bronze', 'iron', 'stone']).map((t) => String(t).toLowerCase());
 const TIERS = [...TIERS_TOP_DOWN].reverse();
-const tierIndex = (name) => (name == null ? null : TIERS.indexOf(String(name).trim().toLowerCase()));
+const ROMAN = { i: 1, ii: 2, iii: 3, 1: 1, 2: 2, 3: 3 };
+/** "gold", "Gold II", "gold 2" -> { tier: 5, div: 2 } ; unknown -> null */
+function parseTier(value) {
+  if (value == null || value === '') return null;
+  const m = String(value).trim().toLowerCase().match(/^([a-z]+)\s*(i{1,3}|[123])?$/);
+  if (!m) return null;
+  const tier = TIERS.indexOf(m[1]);
+  if (tier < 0) return null;
+  return { tier, div: m[2] ? ROMAN[m[2]] : null };
+}
+const tierIndex = (value) => parseTier(value)?.tier ?? -1;
+// Division I sits slightly above division II inside the same tier band on the chart.
+const tierY = (value) => { const p = parseTier(value); return p ? p.tier + (p.div ? 0.2 - (p.div - 1) * 0.4 : 0) : null; };
 const tierName = (i) => (i == null || i < 0 || i >= TIERS.length ? null : TIERS[i][0].toUpperCase() + TIERS[i].slice(1));
+const tierLabel = (value) => { const p = parseTier(value); return p ? tierName(p.tier) + (p.div ? ' ' + ['', 'I', 'II', 'III'][p.div] : '') : null; };
 
 // ---------------------------------------------------------------- helpers
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -34,9 +47,9 @@ const fmtNum = (n) => (n == null || n === '' ? '—' : Number(n).toLocaleString(
 const fmtHours = (h) => (h == null ? '—' : `${fmtNum(h)} h`);
 const fmtPorc = (p) => {
   if (p == null || p === '') return '—';
-  const i = tierIndex(p);
-  if (i >= 0) return tierName(i);
-  console.warn(`unknown PORC tier "${p}" (expected one of: ${TIERS_TOP_DOWN.join(', ')})`);
+  const label = tierLabel(p);
+  if (label) return label;
+  console.warn(`unknown PORC tier "${p}" (expected one of: ${TIERS_TOP_DOWN.join(', ')}, optionally followed by I or II)`);
   return esc(p);
 };
 const fmtDate = (d) => {
@@ -201,7 +214,7 @@ function lineChart({ id, points, yLabel, xLabel = 'Hours played', markers = [], 
   const marks = markers.map((m) => `<a href="${m.href}" class="marker"><title>${esc(m.title)}</title><circle cx="${sx(m.x).toFixed(1)}" cy="${sy(m.y).toFixed(1)}" r="7"/></a>`).join('');
   const data = esc(JSON.stringify({
     L, R, T, B, W, H, xlo: xt.lo, xhi: xt.hi, ylo: yt.lo, yhi: yt.hi, yLabel, xLabel, yLabels,
-    points: points.map((p) => ({ x: p.x, y: p.y, date: p.date, note: p.note ?? '' })),
+    points: points.map((p) => ({ x: p.x, y: p.y, label: p.label ?? null, date: p.date, note: p.note ?? '' })),
   }));
   return `<figure class="chart" id="${id}">
   <svg viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="${id}-t" data-chart="${data}">
@@ -367,12 +380,12 @@ function trackerPage() {
     points: stats.map((s) => ({ x: s.hours, y: s.bp, date: s.date, note: s.note })),
     markers: posts.filter((p) => p.journey.hours != null && p.journey.bp != null).map((p) => ({ x: p.journey.hours, y: p.journey.bp, href: url(p.path), title: `${p.title} (${fmtDate(p.date)})` })),
   });
-  const porcPoints = stats.filter((s) => tierIndex(s.porc) >= 0).map((s) => ({ x: s.hours, y: tierIndex(s.porc), date: s.date, note: s.note }));
+  const porcPoints = stats.filter((s) => tierIndex(s.porc) >= 0).map((s) => ({ x: s.hours, y: tierY(s.porc), label: tierLabel(s.porc), date: s.date, note: s.note }));
   const porcChart = porcPoints.length ? lineChart({
     id: 'porc-chart', yLabel: porcLabel, step: true, area: false,
     yTicks: TIERS.map((_, i) => i), yLabels: TIERS.map((_, i) => tierName(i)),
     points: porcPoints,
-    markers: posts.filter((p) => p.journey.hours != null && tierIndex(p.journey.porc) >= 0).map((p) => ({ x: p.journey.hours, y: tierIndex(p.journey.porc), href: url(p.path), title: `${p.title} (${fmtDate(p.date)})` })),
+    markers: posts.filter((p) => p.journey.hours != null && tierIndex(p.journey.porc) >= 0).map((p) => ({ x: p.journey.hours, y: tierY(p.journey.porc), href: url(p.path), title: `${p.title} (${fmtDate(p.date)})` })),
   }) : '';
   const ladder = `<p class="muted small">The ${esc(porcLabel)} ladder, top to bottom: ${TIERS_TOP_DOWN.map((t) => tierName(TIERS.indexOf(t))).join(', ')}.</p>`;
   const empty = `<p class="muted">Nothing logged yet. The first checkpoint will appear here.</p>`;

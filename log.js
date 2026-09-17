@@ -25,12 +25,22 @@ if (args.length < 2 || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) usage();
 const hours = Number(args[0]), bp = Number(args[1]);
 if (Number.isNaN(hours) || Number.isNaN(bp)) usage();
 
+// Tier may be "gold", "gold ii", "gold 2", or "Gold II" (two args). Anything after it is the note.
 let porc = null;
 let rest = args.slice(2);
-if (rest.length && tiers.includes(rest[0].toLowerCase())) { porc = rest[0].toLowerCase(); rest = rest.slice(1); }
-else if (rest.length && /^[a-z]+$/i.test(rest[0]) && rest.length === 1 && !tiers.includes(rest[0].toLowerCase())) {
-  console.error(`"${rest[0]}" is not a PORC tier. Expected one of: ${tiers.join(', ')}. (Quote multi-word notes.)`);
-  process.exit(1);
+const isDiv = (s) => /^(i{1,2}|[12])$/i.test(s ?? '');
+if (rest.length) {
+  const m = rest[0].toLowerCase().match(/^([a-z]+)\s*(i{1,2}|[12])?$/);
+  if (m && tiers.includes(m[1])) {
+    let div = m[2] ?? '';
+    rest = rest.slice(1);
+    if (!div && isDiv(rest[0])) { div = rest[0]; rest = rest.slice(1); }
+    if (/^\d$/.test(div)) div = ['', 'i', 'ii'][Number(div)];
+    porc = div ? `${m[1]} ${div}` : m[1];
+  } else if (rest.length === 1 && /^[a-z]+$/i.test(rest[0])) {
+    console.error(`"${rest[0]}" is not a PORC tier. Expected one of: ${tiers.join(', ')}, optionally followed by I or II. (Quote multi-word notes.)`);
+    process.exit(1);
+  }
 }
 const note = rest.join(' ').trim();
 

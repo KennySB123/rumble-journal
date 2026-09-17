@@ -43,7 +43,7 @@ npm run log -- 12.5 340
 That appends today's date with 12.5 hours and 340 BP. Add a PORC tier and a note if you like, and `--date` to backfill:
 
 ```bash
-npm run log -- --date 2026-09-01 40 900 gold "first gold placement"
+npm run log -- --date 2026-09-01 40 900 "gold ii" "first gold placement"
 ```
 
 Or edit the file by hand. Each row looks like this, and `porc` can be `null` until you have a placement:
@@ -52,7 +52,7 @@ Or edit the file by hand. Each row looks like this, and `porc` can be `null` unt
 { "date": "2026-09-17", "hours": 90, "bp": 1610, "porc": "gold", "note": "optional" }
 ```
 
-PORC tiers, top to bottom: meteorite, mithril, adamantium, platinum, gold, silver, iron, stone. They are listed in `site.json` if the ladder ever changes. BP is drawn as a line from zero; PORC is drawn as steps up the ladder.
+PORC tiers, top to bottom: meteorite, diamond, mithril, adamantium, platinum, gold, silver, bronze, iron, stone. Tiers with divisions can be written `gold ii` or `gold 2` (shown as "Gold II"). The ladder is listed in `site.json` if it ever changes. BP is drawn as a line from zero; PORC is drawn as steps up the ladder.
 
 ### Sayings (`tips.md`)
 
